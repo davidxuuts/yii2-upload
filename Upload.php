@@ -24,7 +24,6 @@ class Upload extends InputWidget
     public $uploadDrive = 'qiniu';
     public $uploadPath = '';
     public $uploadBaseUrl = '';
-//    public $baseUrl;
     
     public $maxFileNumber = 1;
     public $template = 'create';
@@ -202,6 +201,7 @@ class Upload extends InputWidget
             'multiSelection' => $this->multiSelection,
             'maxFileNumber' => $this->maxFileNumber,
             'storeInDB' => $this->storeInDB,
+            'uploadBaseUrl' => $this->uploadBaseUrl,
         ];
         if ($this->hasModel()) {
             $options['model'] = $this->model;

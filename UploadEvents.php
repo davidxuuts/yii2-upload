@@ -63,7 +63,12 @@ function(up) {
     // console.log('PostInit')
     $(document).on('click', '.upload_file_action', function () {
         let fileId = $(this).parent().attr('id')
-        up.removeFile(up.getFile(fileId))
+        // console.log(fileId)
+        if (fileId !== undefined) {
+            up.removeFile(up.getFile(fileId))
+        } else {
+           $(this).parent().remove()
+        }
         up.refresh()
     })
     $('#{$this->errorContainer}').hide()
@@ -157,7 +162,7 @@ JS_BIND;
     
         $js = /** @lang JavaScript */ <<<JS_BIND
 function (up, file, res) {
-    console.log('FileUploaded')
+    // console.log('FileUploaded')
     // console.log(file)
     // console.log(res)
     if (res !== undefined) {
@@ -197,7 +202,7 @@ JS_BIND;
     protected function bindRefresh() {
         $js = /** @lang JavaScript */ <<<JS_BIND
 function(up) {
-    console.log('Refresh')
+    // console.log('Refresh')
     let params = up.getOption('multipart_params')
     let elementBrowse = $(up.settings.container)
     if (params.max_file_nums !== undefined && params.max_file_nums > 0) {

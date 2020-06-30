@@ -31,5 +31,13 @@ Usage
 
 Once the extension is installed, simply use it in your code by  :
 
+< TO BE COMPLETED >
+
+For qiniu, on view side
 ```php
-<?= \davidxu\upload\AutoloadExample::widget(); ?>```
+<?= \davidxu\upload\Upload::widget(
+    Upload::class, [
+        'uploadDrive' => 'qiniu',
+        'uploadUrl' => 'https://up.qiniup.com',
+); ?>```
+

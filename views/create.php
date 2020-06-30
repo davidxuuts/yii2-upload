@@ -2,7 +2,7 @@
 
 use yii\helpers\Html;
 use yii\base\Model;
-
+use davidxu\upload\helpers\FormatHelper;
 /**
  * @var array $htmlOptions
  * @var array $previewOptions
@@ -15,6 +15,7 @@ use yii\base\Model;
  * @var string $uploadLabel
  * @var array $uploadOptions
  * @var string $errorContainer
+ * @var string $uploadBaseUrl
  */
 ?>
 <?php
@@ -26,20 +27,25 @@ if (is_array($data)) {
     foreach ($data as $key => $item) {
         $html .= Html::beginTag('li', ['class' => 'upload_file', 'id' => 'upload_' . $key]);
         $html .= Html::beginTag('div', ['class' => 'upload_file_thumb']); //div.upload_file_thumb
-        $html .= $model->isNewRecord && $storeInDB
-            ? Html::img(Yii::getAlias('@uploadsUrl') . DIRECTORY_SEPARATOR . $item)
-            : Html::img(Yii::getAlias('@uploadsUrl') . DIRECTORY_SEPARATOR . $model->attachment->url);
+        $html .= $storeInDB
+            ? Html::img($uploadBaseUrl . $model->attachment->path)
+            : Html::img($uploadBaseUrl . $data);
         $html .= Html::endTag('div'); //div.upload_file_thumb
         $html .= Html::beginTag('div', ['class' => 'upload_file_name']); //div.upload_file_name
-        $html .= Html::tag('span', $model->isNewRecord && $storeInDB
-            ? basename($item)
-            : basename($model->attachment->url));
+        $html .= Html::tag('span', $storeInDB
+            ? basename($model->attachment->name)
+            : basename($data));
         $html .= Html::endTag('div'); //div.upload_file_name
-        $html .= Html::tag('div', ['class' => 'upload_file_size']);
+        $html .= Html::tag(
+            'div',
+            $storeInDB ? FormatHelper::formatBytes($model->attachment->size, 0) : 'Unknown',
+            ['class' => 'upload_file_size']
+        );
         $html .= Html::beginTag('div', ['class' => 'upload_file_action']); //div.upload_file_action
         $html .= Html::tag(
             'span',
-            Yii::t('uploadtr', 'Remove', ['class' => 'upload_action_icon'])
+            Yii::t('uploadtr', 'Remove'),
+            ['class' => 'upload_action_icon']
         );
         $html .= Html::endTag('div'); //div.upload_file_action
         $html .= Html::endTag('li');
@@ -55,23 +61,27 @@ if (is_array($data)) {
     if ($data) {
         $html .= Html::beginTag('li', [
             'class' => 'upload_file',
-//            'id' => 'upload_0'
         ]); //li.upload_file
         $html .= Html::beginTag('div', ['class' => 'upload_file_thumb']); //div.upload_file_thumb
-        $html .= $model->isNewRecord && $storeInDB
-            ? Html::img(Yii::getAlias('@uploadsUrl') . DIRECTORY_SEPARATOR . $data)
-            : Html::img(Yii::getAlias('@uploadsUrl') . DIRECTORY_SEPARATOR . $model->attachment->url);
+        $html .= $storeInDB
+            ? Html::img($uploadBaseUrl . $model->attachment->path)
+            : Html::img($uploadBaseUrl . $data);
         $html .= Html::endTag('div'); //div.upload_file_thumb
         $html .= Html::beginTag('div', ['class' => 'upload_file_name']); //div.upload_file_name
-        $html .= Html::tag('span', $model->isNewRecord && $storeInDB
-            ? basename($data)
-            : basename($model->attachment->url));
+        $html .= Html::tag('span', $storeInDB
+            ? basename($model->attachment->name)
+            : basename($data));
         $html .= Html::endTag('div'); //div.upload_file_name
-        $html .= Html::tag('div', ['class' => 'upload_file_size']);
+        $html .= Html::tag(
+            'div',
+            $storeInDB ? FormatHelper::formatBytes($model->attachment->size, 0) : 'Unknown',
+            ['class' => 'upload_file_size']
+        );
         $html .= Html::beginTag('div', ['class' => 'upload_file_action']); //div.upload_file_action
         $html .= Html::tag(
             'span',
-            Yii::t('uploadtr', 'Remove', ['class' => 'upload_action_icon'])
+            Yii::t('uploadtr', 'Remove'),
+            ['class' => 'upload_action_icon']
         );
         $html .= Html::endTag('div'); //div.upload_file_action
         $html .= Html::endTag('li'); //li.upload_file
