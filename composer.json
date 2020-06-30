@@ -1,0 +1,23 @@
+{
+    "name": "davidxu/yii2-upload",
+    "description": "This is a Yii2 Qiniu Uploader with plupload",
+    "type": "yii2-extension",
+    "keywords": ["yii2","extension"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "David Xu",
+            "email": "david.xu.uts@163.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.1",
+        "yiisoft/yii2": "~2.0.0",
+        "qiniu/php-sdk": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "davidxu\\upload\\": ""
+        }
+    }
+}
