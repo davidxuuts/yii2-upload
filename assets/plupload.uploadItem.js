@@ -1,16 +1,16 @@
 
-var UploadItem = function () {
+let UploadItem = function () {
     return {
         tplUploadItem: function (uploader, file, prepareUploadText, removeFileText) {
             // console.log(uploader)
-            // console.log(file)
-            var settings = uploader.settings;
-            var path = file.url;
-            var filesize = file.size;
+            console.log(file)
+            let settings = uploader.settings;
+            let path = file.url;
+            let filesize = file.size;
             if (window.plupload) {
                 filesize = window.plupload.formatSize(filesize);
             }
-            var temp = '<li class="upload_file upload_file_loading" id="' + file.id + '">';
+            let temp = '<li class="upload_file upload_file_loading" id="' + file.id + '">';
 
             if (settings.multi_selection === true) {
                 temp += '<input id="' + settings.id + '-' + file.id + '" name="' + settings.input_name + '[' + file.id + ']' + '" value="' + path + '" type="hidden" class="upload_file_input">';

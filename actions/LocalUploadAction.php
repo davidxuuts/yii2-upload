@@ -99,11 +99,7 @@ class LocalUploadAction extends Action
                     ) {
                         $date = date('Ymd');
                         if ($this->renameFile) {
-                            $filename = date('His') . '_' . uniqid() . '.' . $ext;
-//                            $filename = Yii::$app->request->post(
-//                                'key',
-//                                date('His') . '_' . uniqid() . '.' . $ext
-//                            );
+                            $filename = date('His') . '_' . uniqid('', false) . '.' . $ext;
                         } else {
                             $filename = $file['name'];
                         }

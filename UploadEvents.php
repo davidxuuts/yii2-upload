@@ -162,27 +162,20 @@ JS_BIND;
     
         $js = /** @lang JavaScript */ <<<JS_BIND
 function (up, file, res) {
-    // console.log('FileUploaded')
-    // console.log(file)
-    // console.log(res)
-    if (res !== undefined) {
+    if (res !== undefined && res.status === 200) {
         let response = JSON.parse(res.response)
-        if (response.code === 200) {
-            let data = response.data
-            // console.log(data)
-            let url = data.path
-            let elementFile = $('#' + file.id)
-            let responseElement = {$inputElement}
-            let params = up.getOption('multipart_params')
-            if (params['x:store_in_db'] === true || params['x:store_in_db'] === 'true') {
-                responseElement.val(data.id)
-            } else {
-                responseElement.val(url)
-            }
-            elementFile.find('.upload_file_thumb img').attr('src', '{$fileBaseUrl}' + url)
-            elementFile.removeClass('upload_file_loading');
-            elementFile.find('.upload_file_status').remove();
+        let url = response.path
+        let elementFile = $('#' + file.id)
+        let responseElement = {$inputElement}
+        let params = up.getOption('multipart_params')
+        if (params['x:store_in_db'] === true || params['x:store_in_db'] === 'true') {
+            responseElement.val(response.id)
+        } else {
+            responseElement.val(url)
         }
+        elementFile.find('.upload_file_thumb img').attr('src', '{$fileBaseUrl}' + url)
+        elementFile.removeClass('upload_file_loading');
+        elementFile.find('.upload_file_status').remove();
     }
 }
 JS_BIND;
@@ -221,7 +214,7 @@ JS_BIND;
     protected function bindError() {
         $js = /** @lang JavaScript */ <<<JS_BIND
 function (up, err) {
-    // console.log('Error')
+    // console.log(err)
     let errorElement = $('#' + up.settings.error_container)
     let errMsg = ''
     if (JSON.parse(err.response).error !== undefined) {

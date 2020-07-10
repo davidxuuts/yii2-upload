@@ -322,25 +322,49 @@ UPLOAD_JS;
     }
     
     protected function getQiniuToken() {
-        if (empty($this->qiniuCallbackUrl)) {
+        if (empty($this->qiniuCallbackUrl) || $this->qiniuCallbackUrl === '') {
+            if (!isset(Yii::$app->params['qiniu.callbackUrl']) || Yii::$app->params['qiniu.callbackUrl'] === '') {
+                throw new InvalidArgumentException(Yii::t('uploadtr', 'Invalid configuration'));
+            }
             $this->qiniuCallbackUrl = Yii::$app->params['qiniu.callbackUrl'];
         }
     
-        $this->qiniuBucket = Yii::$app->params['qiniu.bucket'];
-        $this->qiniuAccessKey = Yii::$app->params['qiniu.accessKey'];
-        $this->qiniuSecretKey = Yii::$app->params['qiniu.secretKey'];
-    
-        if (empty($this->qiniuBucket) || empty($this->qiniuAccessKey)
-            || empty($this->qiniuSecretKey) || empty($this->qiniuCallbackUrl)
-        ) {
-            throw new InvalidArgumentException(Yii::t('uploadtr', 'Invalid configuration'));
+        if (empty($this->qiniuBucket) || $this->qiniuBucket === '') {
+            if (!isset(Yii::$app->params['qiniu.bucket']) || Yii::$app->params['qiniu.bucket'] === '') {
+                throw new InvalidArgumentException(Yii::t('uploadtr', 'Invalid configuration'));
+            }
+            $this->qiniuBucket = Yii::$app->params['qiniu.bucket'];
         }
+    
+        if (empty($this->qiniuAccessKey) || $this->qiniuAccessKey === '') {
+            if (!isset(Yii::$app->params['qiniu.accessKey']) || Yii::$app->params['qiniu.accessKey'] === '') {
+                throw new InvalidArgumentException(Yii::t('uploadtr', 'Invalid configuration'));
+            }
+            $this->qiniuAccessKey = Yii::$app->params['qiniu.accessKey'];
+        }
+        
+        if (empty($this->qiniuSecretKey) || $this->qiniuSecretKey === '') {
+            if (!isset(Yii::$app->params['qiniu.secretKey']) || Yii::$app->params['qiniu.secretKey'] === '') {
+                throw new InvalidArgumentException(Yii::t('uploadtr', 'Invalid configuration'));
+            }
+            $this->qiniuSecretKey = Yii::$app->params['qiniu.secretKey'];
+        }
+    
+//        if (empty($this->qiniuBucket) || empty($this->qiniuAccessKey)
+//            || empty($this->qiniuSecretKey) || empty($this->qiniuCallbackUrl)
+//        ) {
+//            throw new InvalidArgumentException(Yii::t('uploadtr', 'Invalid configuration'));
+//        }
         $this->auth = new Auth($this->qiniuAccessKey, $this->qiniuSecretKey);
-        $policy = [
-            'callbackUrl' => $this->qiniuCallbackUrl,
-            'callbackBody' => Json::encode($this->qiniuCallbackBody),
-            'callbackBodyType' => 'application/json',
-        ];
+
+        $policy = [];
+        if (count($this->qiniuCallbackBody) > 0 && (!empty($this->qiniuCallbackUrl) || $this->qiniuCallbackUrl !== '')) {
+            $policy = [
+                'callbackUrl' => $this->qiniuCallbackUrl,
+                'callbackBody' => Json::encode($this->qiniuCallbackBody),
+                'callbackBodyType' => 'application/json',
+            ];
+        }
         return $this->auth->uploadToken($this->qiniuBucket, null, 3600, $policy);
     }
 }
