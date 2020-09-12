@@ -27,6 +27,7 @@ class Upload extends InputWidget
     
     public $maxFileNumber = 1;
     public $template = 'create';
+    public $attachmentProperty = 'attachment';
     public $multiSelection = false;
     public $maxFileSize = 100 * 1024 * 1024;
     
@@ -202,6 +203,7 @@ class Upload extends InputWidget
             'maxFileNumber' => $this->maxFileNumber,
             'storeInDB' => $this->storeInDB,
             'uploadBaseUrl' => $this->uploadBaseUrl,
+            'attachmentProperty' => $this->attachmentProperty,
         ];
         if ($this->hasModel()) {
             $options['model'] = $this->model;

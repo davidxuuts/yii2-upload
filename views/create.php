@@ -16,6 +16,7 @@ use davidxu\upload\helpers\FormatHelper;
  * @var array $uploadOptions
  * @var string $errorContainer
  * @var string $uploadBaseUrl
+ * @var string $attachmentProperty
  */
 ?>
 <?php
@@ -28,17 +29,19 @@ if (is_array($data)) {
         $html .= Html::beginTag('li', ['class' => 'upload_file', 'id' => 'upload_' . $key]);
         $html .= Html::beginTag('div', ['class' => 'upload_file_thumb']); //div.upload_file_thumb
         $html .= $storeInDB
-            ? Html::img($uploadBaseUrl . $model->attachment->path)
+            ? Html::img($uploadBaseUrl . ($model->$attachmentProperty ? $model->$attachmentProperty->path : ''))
             : Html::img($uploadBaseUrl . $data);
         $html .= Html::endTag('div'); //div.upload_file_thumb
         $html .= Html::beginTag('div', ['class' => 'upload_file_name']); //div.upload_file_name
         $html .= Html::tag('span', $storeInDB
-            ? basename($model->attachment->name)
+            ? basename($model->$attachmentProperty ? $model->$attachmentProperty->name : '')
             : basename($data));
         $html .= Html::endTag('div'); //div.upload_file_name
         $html .= Html::tag(
             'div',
-            $storeInDB ? FormatHelper::formatBytes($model->attachment->size, 0) : 'Unknown',
+            $storeInDB ? FormatHelper::formatBytes(
+                $model->$attachmentProperty ? $model->$attachmentProperty->size : 0, 0
+            ) : 'Unknown',
             ['class' => 'upload_file_size']
         );
         $html .= Html::beginTag('div', ['class' => 'upload_file_action']); //div.upload_file_action
@@ -64,17 +67,19 @@ if (is_array($data)) {
         ]); //li.upload_file
         $html .= Html::beginTag('div', ['class' => 'upload_file_thumb']); //div.upload_file_thumb
         $html .= $storeInDB
-            ? Html::img($uploadBaseUrl . $model->attachment->path)
+            ? Html::img($uploadBaseUrl . ($model->$attachmentProperty ? $model->$attachmentProperty->path : ''))
             : Html::img($uploadBaseUrl . $data);
         $html .= Html::endTag('div'); //div.upload_file_thumb
         $html .= Html::beginTag('div', ['class' => 'upload_file_name']); //div.upload_file_name
         $html .= Html::tag('span', $storeInDB
-            ? basename($model->attachment->name)
+            ?  basename($model->$attachmentProperty ? $model->$attachmentProperty->name : '')
             : basename($data));
         $html .= Html::endTag('div'); //div.upload_file_name
         $html .= Html::tag(
             'div',
-            $storeInDB ? FormatHelper::formatBytes($model->attachment->size, 0) : 'Unknown',
+            $storeInDB ? FormatHelper::formatBytes(
+                $model->$attachmentProperty ? $model->$attachmentProperty->size : 0,
+                0) : 'Unknown',
             ['class' => 'upload_file_size']
         );
         $html .= Html::beginTag('div', ['class' => 'upload_file_action']); //div.upload_file_action
