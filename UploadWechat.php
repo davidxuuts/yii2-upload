@@ -3,54 +3,34 @@
 
 namespace davidxu\upload;
 
-use Qiniu\Auth;
 use yii\base\InvalidArgumentException;
 use yii\bootstrap\InputWidget;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\helpers\Json;
+use yii\helpers\Url;
 use Yii;
 use yii\i18n\PhpMessageSource;
 
-class Upload extends InputWidget
+class UploadWechat extends InputWidget
 {
     /**
      * @var string
      */
-    public $uploadUrl = 'https://up.qiniup.com';
-    public $storeInDB = true;
-    public $uploadDrive = 'qiniu';
-    public $uploadPath = '';
-    public $uploadBaseUrl = '';
+    public $uploadUrl;
+    public $uploadBaseUrl;
+    public $uploadId;
     
+    // $type: image|voice|video|thumb|news
+    public $type = 'image';
+    // $materialType: perm|temp
+    public $materialType = 'perm';
     public $maxFileNumber = 1;
-    public $template = 'create';
-    public $attachmentProperty = 'attachment';
+    public $template = 'wechat-image';
     public $multiSelection = false;
-    public $maxFileSize = 100 * 1024 * 1024;
+    public $descriptionAttribute = 'description';
     
     public $showUploadProgress = true;
-    
-    public $qiniuBucket;
-    public $qiniuAccessKey;
-    public $qiniuSecretKey;
-    public $qiniuCallbackUrl;
-    public $qiniuCallbackBody = [
-        'drive' => 'qiniu',
-        'specific_type' => '$(mimeType)',
-        'path' => '$(key)',
-        'hash' => '$(etag)',
-        'size' => '$(fsize)',
-        'name' => '$(fname)',
-        'extension' => '$(ext)',
-        'member_id' => '$(x:member_id)',
-        'width' => '$(imageInfo.width)',
-        'height' => '$(imageInfo.height)',
-        'year' => '$(x:year)',
-        'month' => '$(x:month)',
-        'day' => '$(x:day)',
-        'store_in_db' => '$(x:store_in_db)',
-    ];
     
     public $id;
     public $events = [];
@@ -59,7 +39,7 @@ class Upload extends InputWidget
         'quality' => 90,
         'crop' => false,
     ];
-    protected $auth;
+//    protected $auth;
     
     protected $htmlOptions = ['class' => 'upload_wrapper'];
     
@@ -80,6 +60,13 @@ class Upload extends InputWidget
     
     protected $bundle;
     
+    private $audioDuration = 60;
+    private $maxSizePermImage = '10mb';
+    private $maxSizePermVideo = '10mb';
+    private $maxSizePermVoice = '2mb';
+    private $maxSizePermThumb = '64kb';
+    
+    
     /**
      * @inheritDoc
      */
@@ -95,7 +82,7 @@ class Upload extends InputWidget
         if (!isset($this->htmlOptions['id'])) {
             $this->htmlOptions['id'] = $this->id;
         }
-        // Make sure the upload URL is provided
+        
         if (!$this->uploadUrl || $this->uploadUrl === '') {
             throw new InvalidArgumentException(
                 Yii::t(
@@ -104,6 +91,10 @@ class Upload extends InputWidget
                     ['class' => get_class($this)]
                 )
             );
+        }
+        
+        if (empty($this->uploadId)) {
+            $this->uploadId = 'uploader_' . $this->id;
         }
         
         if ($this->hasModel()) {
@@ -143,7 +134,9 @@ class Upload extends InputWidget
             $this->maxFileNumber = 1;
         }
         
-        $this->options['resize'] = $this->resizeOptions;
+        if ($this->type === 'image' || $this->type === 'thumb') {
+            $this->options['resize'] = $this->resizeOptions;
+        }
         
         // For preview
         if (!isset($this->previewOptions['id'])) {
@@ -159,7 +152,7 @@ class Upload extends InputWidget
             $this->errorContainer = $this->id . '_error';
         }
         
-        if (empty($this->uploadBaseUrl)) {
+        if (empty($this->uploadBaseUrl) || $this->uploadBaseUrl === '') {
             if (
                 isset(Yii::$app->params['uploadBaseUrl'])
                 && (Yii::$app->params['uploadBaseUrl'] !== '' || !empty(Yii::$app->params['uploadBaseUrl']))
@@ -199,9 +192,7 @@ class Upload extends InputWidget
             'uploadOptions' => $this->uploadOptions,
             'multiSelection' => $this->multiSelection,
             'maxFileNumber' => $this->maxFileNumber,
-            'storeInDB' => $this->storeInDB,
             'uploadBaseUrl' => $this->uploadBaseUrl,
-            'attachmentProperty' => $this->attachmentProperty,
         ];
         if ($this->hasModel()) {
             $options['model'] = $this->model;
@@ -215,50 +206,145 @@ class Upload extends InputWidget
         $bundle = $this->registerAssetBundle();
         $view = $this->getView();
         
+        switch ($this->type) {
+            case 'image':
+                $filters = [
+                    'mime_types' => [
+                        [
+                            'title' => 'Image files',
+                            'extensions' => 'bmp,png,jpeg,jpg,gif',
+                        ],
+                    ],
+                    'max_file_size' => $this->maxSizePermImage ?? '10mb',
+                ];
+                break;
+            case 'voice':
+                $filters = [
+                    'mime_types' => [
+                        [
+                            'title' => 'Voice files',
+                            'extensions' => 'mp3,wma,wav,amr',
+                        ],
+                    ],
+                    'max_file_size' => $this->maxSizePermVoice ?? '2mb',
+                    'max_duration' => $this->audioDuration,
+                ];
+                break;
+            case 'video':
+                $filters = [
+                    'mime_types' => [
+                        [
+                            'title' => 'Video files',
+                            'extensions' => 'mp4',
+                        ],
+                    ],
+                    'max_file_size' => $this->maxSizePermVideo ?? '10mb',
+                ];
+                break;
+            case 'thumb':
+                $filters = [
+                    'mime_types' => [
+                        [
+                            'title' => 'Thumbnail files',
+                            'extensions' => 'jpg',
+                        ],
+                    ],
+                    'max_file_size' => $this->maxSizePermThumb ?? '64kb',
+                ];
+                break;
+            default:
+                $filters = [];
+        }
+
         $defaultJsOptions = [
             'runtimes' => 'html5,flash,silverlight,html4',
             'url' => $this->uploadUrl,
             'container' => $this->containerOptions['id'],
             'browse_button' => $this->browseOptions['id'],
             'multi_selection' => $this->multiSelection && ($this->maxFileNumber > 1),
-            'max_file_size' => $this->maxFileSize,
+            'filters' => $filters,
             'max_retries' => 3,
-            'chunk_size' => 4 * 1024 * 1024,
+//            'chunk_size' => 4 * 1024 * 1024,
             'flash_swf_url' => $bundle->baseUrl . "/Moxie.swf",
             'silverlight_xap_url' => $bundle->baseUrl . "/Moxie.xap",
             'error_container' => $this->errorContainer,
         ];
         $this->options['error_image_url'] = $bundle->baseUrl . '/images/error.png';
+    
         $options = ArrayHelper::merge($defaultJsOptions, $this->options);
         
         $externalOptions = [
             'multipart_params' => [
-                'x:member_id' => Yii::$app->getUser()->getIsGuest() ? 0: Yii::$app->user->id,
-                Yii::$app->request->csrfParam => Yii::$app->request->csrfToken,
+//                Yii::$app->request->csrfParam => Yii::$app->request->csrfToken,
+                'merchant_id' => 0,
                 'max_file_nums' => $this->maxFileNumber,
-                'x:store_in_db' => $this->storeInDB,
-                'x:year' => (int)(date('Y')),
-                'x:month' => (int)(date('m')),
-                'x:day' => (int)(date('d')),
-                'x:uploadPath' => $this->uploadPath !== '' || !empty($this->uploadPath)
-                    ? $this->uploadPath
-                    : 'uploads'. DIRECTORY_SEPARATOR . date('Ymd') . DIRECTORY_SEPARATOR,
+                'media_type' => $this->type,
+                'is_temporary' => $this->materialType,
+                'year' => (int)(date('Y')),
+                'month' => (int)(date('m')),
+                'day' => (int)(date('d')),
+                'link_type' => 1,
+                'status' => 1,
             ],
         ];
-        if ($this->uploadDrive === 'qiniu') {
-            $externalOptions['multipart_params']['token'] = $this->getQiniuToken();
-        }
         $options = Json::encode(ArrayHelper::merge($options, $externalOptions));
         
         $id = $this->id;
-        $js = /** @lang Javascript */ <<<UPLOAD_JS
+        $langMaxAudioDurationLimit = Yii::t('uploadtr', 'Max duration should be {duration}', [
+            'duration' => $this->audioDuration ?? 60,
+        ]);
+        $jsMaxDuration = /** @lang JavaScript */ <<<MAX_DURATION_JS
+
+    plupload.addFileFilter('max_duration', function(maxDuration, file, cb) {
+        let self = this
+        let audioUrl = URL.createObjectURL(file.getNative())
+        let audio = new Audio(audioUrl)
+        let duration = 0
+        audio.addEventListener('loadedmetadata', function(_event) {
+            duration = Math.floor(audio.duration)
+            if (typeof duration !== 'undefined' && maxDuration && duration > maxDuration) {
+                self.trigger('Error', {
+                    code : -800,
+                    message : '{$langMaxAudioDurationLimit}',
+                    file : file
+                })
+                cb(false)
+            } else {
+                cb(true)
+            }
+        })
+    })
+MAX_DURATION_JS;
+        $jsMaxSize = /** @lang JavaScript */ <<<MAX_SIZE_JS
+
+    plupload.addFileFilter('max_file_size', function(maxSize, file, cb) {
+        let undef
+        maxSize = plupload.parseSize(maxSize)
+        const reader = new FileReader()
+        if (file.size !== undef && maxSize && file.size > maxSize) {
+		    this.trigger('Error', {
+			    code : plupload.FILE_SIZE_ERROR,
+			    message : plupload.translate('File size error.'),
+			    file : file
+		    })
+		    cb(false)
+	    } else {
+		    cb(true)
+	    }
+    })
+MAX_SIZE_JS;
+        $jsUpload = /** @lang JavaScript */ <<<UPLOAD_JS
+
 $(function() {
-    let uploader_{$id} = new plupload.Uploader({$options})
-    uploader_{$id}.init()
+    {$this->buildFileFilters($jsMaxSize)}
+    {$this->buildFileFilters($jsMaxDuration)}
+    const {$this->uploadId} = new plupload.Uploader({$options})
+    {$this->uploadId}.init()
     {$this->buildBinds()}
+    {$this->uploadId}.start()
 })
 UPLOAD_JS;
-        $view->registerJs($js);
+        $view->registerJs($jsUpload);
     }
     
     protected function registerAssetBundle()
@@ -266,6 +352,10 @@ UPLOAD_JS;
         return UploadAsset::register($this->view);
     }
 
+    protected function buildFileFilters($fileFilter) {
+        return $fileFilter;
+    }
+    
     protected function buildBinds()
     {
         $events = ArrayHelper::merge(self::buildEvents(), $this->events);
@@ -274,7 +364,7 @@ UPLOAD_JS;
         }
         $script = '';
         foreach ($events as $event => $bindScript) {
-            $script .= 'uploader_' . $this->id . ".bind('$event', $bindScript);\n";
+            $script .= $this->uploadId .".bind('$event', $bindScript)\n";
         }
         return $script;
     }
@@ -291,7 +381,7 @@ UPLOAD_JS;
             'FileUploaded',
             'UploadComplete',
             'Refresh',
-            'Error'
+            'Error',
         ];
         if ($this->showUploadProgress) {
             $registerEvents[] = 'UploadProgress';
@@ -302,9 +392,15 @@ UPLOAD_JS;
             'previewContainer' => $this->previewContainer,
             'multiSelection' => $this->multiSelection,
             'inputElement' => $this->inputElement,
-            'fileBaseUrl' => $this->uploadBaseUrl,
+            'errorImage' => $this->bundle->baseUrl . "/images/fail.png",
+            'voiceDefaultUrl' => $this->bundle->baseUrl . '/images/music.png',
+            'videoDefaultUrl' => $this->bundle->baseUrl . '/images/play.png',
+            'fileDefaultUrl' => $this->bundle->baseUrl . '/images/file.png',
         ];
-        $event = new UploadEvents($configs);
+        if ($this->type === 'video') {
+            $configs['videoDescriptionAttribute'] = $this->descriptionAttribute;
+        }
+        $event = new UploadWechatEvents($configs);
         return $event->getScripts($registerEvents);
     }
     
@@ -319,52 +415,5 @@ UPLOAD_JS;
                     '*' => 'uploadtr.php',
                 ],
         ];
-    }
-    
-    protected function getQiniuToken() {
-        if (empty($this->qiniuCallbackUrl) || $this->qiniuCallbackUrl === '') {
-            if (!isset(Yii::$app->params['qiniu.callbackUrl']) || Yii::$app->params['qiniu.callbackUrl'] === '') {
-                throw new InvalidArgumentException(Yii::t('uploadtr', 'Invalid configuration'));
-            }
-            $this->qiniuCallbackUrl = Yii::$app->params['qiniu.callbackUrl'];
-        }
-    
-        if (empty($this->qiniuBucket) || $this->qiniuBucket === '') {
-            if (!isset(Yii::$app->params['qiniu.bucket']) || Yii::$app->params['qiniu.bucket'] === '') {
-                throw new InvalidArgumentException(Yii::t('uploadtr', 'Invalid configuration'));
-            }
-            $this->qiniuBucket = Yii::$app->params['qiniu.bucket'];
-        }
-    
-        if (empty($this->qiniuAccessKey) || $this->qiniuAccessKey === '') {
-            if (!isset(Yii::$app->params['qiniu.accessKey']) || Yii::$app->params['qiniu.accessKey'] === '') {
-                throw new InvalidArgumentException(Yii::t('uploadtr', 'Invalid configuration'));
-            }
-            $this->qiniuAccessKey = Yii::$app->params['qiniu.accessKey'];
-        }
-        
-        if (empty($this->qiniuSecretKey) || $this->qiniuSecretKey === '') {
-            if (!isset(Yii::$app->params['qiniu.secretKey']) || Yii::$app->params['qiniu.secretKey'] === '') {
-                throw new InvalidArgumentException(Yii::t('uploadtr', 'Invalid configuration'));
-            }
-            $this->qiniuSecretKey = Yii::$app->params['qiniu.secretKey'];
-        }
-    
-//        if (empty($this->qiniuBucket) || empty($this->qiniuAccessKey)
-//            || empty($this->qiniuSecretKey) || empty($this->qiniuCallbackUrl)
-//        ) {
-//            throw new InvalidArgumentException(Yii::t('uploadtr', 'Invalid configuration'));
-//        }
-        $this->auth = new Auth($this->qiniuAccessKey, $this->qiniuSecretKey);
-
-        $policy = [];
-        if (count($this->qiniuCallbackBody) > 0 && (!empty($this->qiniuCallbackUrl) || $this->qiniuCallbackUrl !== '')) {
-            $policy = [
-                'callbackUrl' => $this->qiniuCallbackUrl,
-                'callbackBody' => Json::encode($this->qiniuCallbackBody),
-                'callbackBodyType' => 'application/json',
-            ];
-        }
-        return $this->auth->uploadToken($this->qiniuBucket, null, 3600, $policy);
     }
 }

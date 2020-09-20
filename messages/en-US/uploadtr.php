@@ -20,4 +20,5 @@ return [
     'Save file successfully' => 'Save file successfully',
     'Uplod driver should be "local" or "qiniu"' => 'Uplod driver should be "local" or "qiniu"',
     'Invalid configuration' => 'Invalid configuration',
+    'Max duration should be {duration}' => 'Max duration should be {duration} s',
 ];

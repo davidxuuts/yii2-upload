@@ -213,6 +213,7 @@ class LocalUploadAction extends Action
      */
     protected function writeToDB($file, $filename, $savePath, array $postData, $ext, $drive = 'local')
     {
+        /** @var Attachment $model */
         $model = new $this->modelClass;
         $model->member_id = $postData['x:member_id'];
         $model->drive = $drive;

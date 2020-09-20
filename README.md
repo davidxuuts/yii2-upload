@@ -41,3 +41,12 @@ For qiniu, on view side
         'uploadUrl' => 'https://up.qiniup.com',
 ); ?>```
 
+For wechat, on view side
+```php
+<?= \davidxu\upload\UploadWechat::widget(
+    Upload::class, [
+        'uploadUrl' => \yii\helpers\Url::to('path/to/upload'),
+        'type' => 'video',
+); ?>```
+
+TO BE CONTINUED

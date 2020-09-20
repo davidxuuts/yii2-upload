@@ -14,6 +14,8 @@ class UploadAsset extends AssetBundle
     
     public $js = [
         'plupload.full.min.js',
+//        'moxie.js',
+//        'plupload.dev.js',
         'i18n/zh_CN.js',
         'plupload.uploadItem.js',
     ];

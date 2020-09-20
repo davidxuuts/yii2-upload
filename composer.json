@@ -13,6 +13,7 @@
     "require": {
         "php": ">=7.1",
         "yiisoft/yii2": "~2.0.0",
+        "jianyan74/yii2-easy-wechat": "*",
         "qiniu/php-sdk": "*"
     },
     "autoload": {

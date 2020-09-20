@@ -39,7 +39,6 @@ class UploadEvents extends BaseObject
     protected function bindInit() {
         $js = /** @lang JavaScript */ <<<JS_BIND
 function(up) {
-    // console.log('Init')
     let params = up.getOption('multipart_params')
     let elementBrowse = $(up.settings.container)
     if (params.max_file_nums !== undefined && params.max_file_nums > 0) {
@@ -60,10 +59,8 @@ JS_BIND;
 
         $js = /** @lang JavaScript */ <<<JS_BIND
 function(up) {
-    // console.log('PostInit')
     $(document).on('click', '.upload_file_action', function () {
         let fileId = $(this).parent().attr('id')
-        // console.log(fileId)
         if (fileId !== undefined) {
             up.removeFile(up.getFile(fileId))
         } else {
@@ -88,20 +85,16 @@ JS_BIND;
         
         $js = /** @lang JavaScript */ <<<JS_BIND
 function (up, files) {
-    // console.log('FilesAdded')
     $('#{$this->errorContainer}').hide()
     let upfiles = ''
     let prepareUploadText = '{$prepareUploadText}'
     let removeFileText = '{$removeFileText}'
      plupload.each(files, function (file) {
-        // console.log(file)
         let params = up.getOption('multipart_params')
         let key = '{$this->generateKey()}'
         let ext = file.name.substr(file.name.lastIndexOf('.'))
         params.key = params['x:uploadPath'] + key + ext
-        // console.log(params)
         up.setOption('multipart_params', params)
-        // console.log(up)
         upfiles += UploadItem.tplUploadItem(up, file, prepareUploadText, removeFileText)
     })
     $('#{$this->previewContainer}').{$this->appendHtmlType}(upfiles)
@@ -119,7 +112,6 @@ JS_BIND;
             : '$(\'#' . $this->inputElement . '\')';
         $js = /** @lang JavaScript */ <<<JS_BIND
 function (up, files) {
-    // console.log('FilesRemoved')
     let responseElement = {$inputElement}
     $.each(files, function(index, file) {
         responseElement.val('')
@@ -134,7 +126,6 @@ JS_BIND;
         $uploadInProgressText = Yii::t('uploadtr', 'Upload in progress');
         $js = /** @lang JavaScript */ <<<JS_BIND
 function (up, file) {
-    // console.log('Beforeupload')
     $('#' + file.id).find('.upload_file_mark').addClass('upload_file_uploading').html('{$uploadInProgressText}')
 }
 JS_BIND;
@@ -143,13 +134,12 @@ JS_BIND;
     
     protected function bindUploadProgress() {
         $js = /** @lang JavaScript */ <<<JS_BIND
-function (up, file) {
-    // console.log('UploadProgress')
+(function (up, file) {
     let percent = file.percent + '%'
     let elementFile = $('#' + file.id)
     elementFile.find('.upload_file_percent').html(percent);
     elementFile.find('.progress-bar').width(percent);
-}
+})
 JS_BIND;
         return $js;
     }
@@ -162,7 +152,7 @@ JS_BIND;
     
         $js = /** @lang JavaScript */ <<<JS_BIND
 function (up, file, res) {
-    if (res !== undefined && res.status === 200) {
+    if (typeof res !== 'undefined' && res.status === 200) {
         let response = JSON.parse(res.response)
         let url = response.path
         let elementFile = $('#' + file.id)
@@ -184,10 +174,9 @@ JS_BIND;
     
     protected function bindUploadComplete() {
         $js = /** @lang JavaScript */ <<<JS_BIND
-function (up, files) {
-    // console.log('UploadComplete')
+(function (up, files) {
     up.disableBrowse(false)
-}
+})
 JS_BIND;
         return $js;
     }
@@ -195,7 +184,6 @@ JS_BIND;
     protected function bindRefresh() {
         $js = /** @lang JavaScript */ <<<JS_BIND
 function(up) {
-    // console.log('Refresh')
     let params = up.getOption('multipart_params')
     let elementBrowse = $(up.settings.container)
     if (params.max_file_nums !== undefined && params.max_file_nums > 0) {
@@ -213,15 +201,14 @@ JS_BIND;
     
     protected function bindError() {
         $js = /** @lang JavaScript */ <<<JS_BIND
-function (up, err) {
-    // console.log(err)
+(function (up, err) {
     let errorElement = $('#' + up.settings.error_container)
     let errMsg = ''
     if (JSON.parse(err.response).error !== undefined) {
         errMsg = JSON.parse(err.response).error
     }
     errorElement.html('Error #:' + err.code + ' ' + err.message + errMsg).show()
-}
+})
 JS_BIND;
         return $js;
     }

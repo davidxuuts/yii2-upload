@@ -20,5 +20,6 @@ return [
     'Save file successfully' => '文件保存成功',
     'Uplod driver should be "local" or "qiniu"' => '上传驱动必须为"local"或"qiniu"',
     'Invalid configuration' => '配置出错或无效',
+    'Max duration should be {duration}' => '最大时长不能超过{duration}秒',
     
 ];
