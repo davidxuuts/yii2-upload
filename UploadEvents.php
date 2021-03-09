@@ -17,6 +17,11 @@ class UploadEvents extends BaseObject
     public $inputElement;
     public $fileBaseUrl;
     
+    public $errorImage;
+    public $videoDefaultUrl;
+    public $audioDefaultUrl;
+    public $fileDefaultUrl;
+    
     private $appendHtmlType = 'html';
     
     public function getScripts($events)
@@ -89,11 +94,22 @@ function (up, files) {
     let upfiles = ''
     let prepareUploadText = '{$prepareUploadText}'
     let removeFileText = '{$removeFileText}'
-     plupload.each(files, function (file) {
+    plupload.each(files, function (file) {
+        console.log(file)
         let params = up.getOption('multipart_params')
         let key = '{$this->generateKey()}'
         let ext = file.name.substr(file.name.lastIndexOf('.'))
+        const mimeType = file.type.split('/', 1)[0]
+        let fileType = 'files'
+        if (mimeType === 'image') {
+          fileType = 'images'
+        } else if (mimeType === 'video') {
+          fileType = 'videos'
+        } else if (mimeType === 'audio') {
+          fileType = 'audios'
+        }
         params.key = params['x:uploadPath'] + key + ext
+        params['x:upload_type'] = fileType
         up.setOption('multipart_params', params)
         upfiles += UploadItem.tplUploadItem(up, file, prepareUploadText, removeFileText)
     })
@@ -152,15 +168,27 @@ JS_BIND;
     
         $js = /** @lang JavaScript */ <<<JS_BIND
 function (up, file, res) {
+    console.log(res)
     if (typeof res !== 'undefined' && res.status === 200) {
         let response = JSON.parse(res.response)
         let url = response.path
+        if (response.upload_type === 'videos') {
+            url = `{$this->videoDefaultUrl}`
+        }
+        if (response.upload_type === 'audios') {
+            url = `{$this->audioDefaultUrl}`
+        }
+        if (response.upload_type === 'files') {
+            url = `{$this->fileDefaultUrl}`
+        }
         let elementFile = $('#' + file.id)
         let responseElement = {$inputElement}
         let params = up.getOption('multipart_params')
         if (params['x:store_in_db'] === true || params['x:store_in_db'] === 'true') {
+            console.log('store_in_db', 'true')
             responseElement.val(response.id)
         } else {
+            console.log('store_in_db', 'false')
             responseElement.val(url)
         }
         elementFile.find('.upload_file_thumb img').attr('src', '{$fileBaseUrl}' + url)
@@ -223,4 +251,5 @@ JS_BIND;
         }
         return date('His') . '_' . $string;
     }
+    
 }

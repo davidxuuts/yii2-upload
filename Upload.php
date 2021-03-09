@@ -23,6 +23,8 @@ class Upload extends InputWidget
     public $uploadPath = '';
     public $uploadBaseUrl = '';
     
+    public $fancybox = true;
+    
     public $maxFileNumber = 1;
     public $template = 'create';
     public $attachmentProperty = 'attachment';
@@ -38,6 +40,7 @@ class Upload extends InputWidget
     public $qiniuCallbackBody = [
         'drive' => 'qiniu',
         'specific_type' => '$(mimeType)',
+        'upload_type' => '$(x:upload_type)',
         'path' => '$(key)',
         'hash' => '$(etag)',
         'size' => '$(fsize)',
@@ -202,6 +205,7 @@ class Upload extends InputWidget
             'storeInDB' => $this->storeInDB,
             'uploadBaseUrl' => $this->uploadBaseUrl,
             'attachmentProperty' => $this->attachmentProperty,
+            'fancybox' => $this->fancybox,
         ];
         if ($this->hasModel()) {
             $options['model'] = $this->model;
@@ -303,6 +307,10 @@ UPLOAD_JS;
             'multiSelection' => $this->multiSelection,
             'inputElement' => $this->inputElement,
             'fileBaseUrl' => $this->uploadBaseUrl,
+            'errorImage' => $this->bundle->baseUrl . "/images/fail.png",
+            'audioDefaultUrl' => $this->bundle->baseUrl . '/images/music.png',
+            'videoDefaultUrl' => $this->bundle->baseUrl . '/images/play.png',
+            'fileDefaultUrl' => $this->bundle->baseUrl . '/images/file.png',
         ];
         $event = new UploadEvents($configs);
         return $event->getScripts($registerEvents);

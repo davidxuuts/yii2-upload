@@ -18,6 +18,8 @@ class UploadAsset extends AssetBundle
 //        'plupload.dev.js',
         'i18n/zh_CN.js',
         'plupload.uploadItem.js',
+        'js/sha1.min.js',
+        'js/qetag.js',
     ];
     
     public $css = [
