@@ -21,5 +21,7 @@ return [
     'Uplod driver should be "local" or "qiniu"' => '上传驱动必须为"local"或"qiniu"',
     'Invalid configuration' => '配置出错或无效',
     'Max duration should be {duration}' => '最大时长不能超过{duration}秒',
-    
+    'The image height must larger than {minHeight} pixels' => '图片高度最小应为{minHeight}像素',
+    'The image width must larger than {minWidth} pixels' => '图片宽度最小应为{minWidth}像素',
+    'The image size must larger than {minWidth}*{minHeight} pixels' => '图片最小应为{minWidth}x{minHeight}像素',
 ];

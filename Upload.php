@@ -62,6 +62,9 @@ class Upload extends InputWidget
         'quality' => 90,
         'crop' => false,
     ];
+    public $minWidth = 0;
+    public $minHeight = 0;
+    public $filters = [];
     protected $auth;
     
     protected $htmlOptions = ['class' => 'upload_wrapper'];
@@ -252,14 +255,20 @@ class Upload extends InputWidget
         if ($this->uploadDrive === 'qiniu') {
             $externalOptions['multipart_params']['token'] = $this->getQiniuToken();
         }
+        if ($this->minHeight > 0 || $this->minWidth > 0) {
+            $externalOptions['filters'] = ArrayHelper::merge($this->filters,
+                ['min_img_resolution' => $this->minWidth . ',' . $this->minHeight]
+            );
+        }
         $options = Json::encode(ArrayHelper::merge($options, $externalOptions));
-        
+
         $id = $this->id;
         $js = /** @lang Javascript */ <<<UPLOAD_JS
 $(function() {
     let uploader_{$id} = new plupload.Uploader({$options})
     uploader_{$id}.init()
     {$this->buildBinds()}
+    {$this->loadImageSizeResolution()}
 })
 UPLOAD_JS;
         $view->registerJs($js);
@@ -374,5 +383,86 @@ UPLOAD_JS;
             ];
         }
         return $this->auth->uploadToken($this->qiniuBucket, null, 3600, $policy);
+    }
+    
+    protected function loadImageSizeResolution()
+    {
+        $minHeightText = Yii::t('uploadtr', "The image height must larger than {minHeight} pixels", [
+            'minHeight' => $this->minHeight,
+        ]);
+        $minWidthText = Yii::t('uploadtr', "The image width must larger than {minWidth} pixels", [
+            'minWidth' => $this->minWidth,
+        ]);
+        $minWidthHeightText = Yii::t('uploadtr', "The image size must larger than {minWidth}*{minHeight} pixels", [
+            'minWidth' => $this->minWidth,
+            'minHeight' => $this->minHeight,
+        ]);
+        $js = /** @lang JavaScript */ <<<IMAGE_SIZE_RESOLUTION_JS
+
+plupload.addFileFilter('min_img_resolution', function(minImgSize, file, cb) {
+  const minSize = minImgSize.split(",")
+  const minWidth = minSize[0]
+  const minHeight = minSize[1]
+  console.log(minHeight, minWidth)
+  let message = `{$minWidthHeightText}`
+  if (minWidth > 0 && minHeight <= 0) {
+    message = `{$minWidthText}`
+  } else if (minWidth <= 0 && minHeight > 0) {
+     message = `{$minHeightText}`
+  }
+  let self = this
+  // img = new o.Image()
+  img = new window.moxie.image.Image()
+  // let img = new FileReader();
+  console.log(file)
+  // img.readAsDataURL(file.getNative());
+  function finalize(result) {
+    // cleanup
+    img.destroy()
+    img = null
+
+    // if rule has been violated in one way or another, trigger an error
+    if (!result) {
+      self.trigger('Error', {
+        response: {
+          error: true,
+          code: plupload.IMAGE_DIMENSIONS_ERROR,
+          message: message,
+          file: file
+        }
+      })
+    }
+    cb(result)
+  }
+    img.onload = function() {
+      console.log('size should', minWidth + '*' + minHeight)
+      console.log('size acture', img.width + '*' + img.height)
+      // check if resolution cap is not exceeded
+      // finalize(img.width * img.height < maxRes)
+      if (minWidth > 0 && minHeight > 0) {
+        console.log('size lt', img.width >= minWidth && img.height >= minHeight)
+        finalize(img.width >= minWidth && img.height >= minHeight)
+      } else if (minWidth > 0 && minHeight <= 0) {
+        console.log('width lt', img.width >= minWidth)
+        finalize(img.width >= minWidth)
+      } else if (minWidth <= 0 && minHeight > 0) {
+        console.log('height lt', img.height >= minHeight)
+        finalize(img.height >= minHeight)
+      } else {
+        console.log(true)
+        finalize(true)
+      }
+    }
+    img.onerror = function() {
+      finalize(false)
+    }
+  img.load(file.getSource())
+    // img.onload = function() {
+    //   return file.getSource()
+    // }
+})
+IMAGE_SIZE_RESOLUTION_JS;
+        if ($this->minWidth > 0 || $this->minHeight > 0)
+        return $js;
     }
 }

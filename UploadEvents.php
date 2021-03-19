@@ -65,12 +65,13 @@ JS_BIND;
         $js = /** @lang JavaScript */ <<<JS_BIND
 function(up) {
     $(document).on('click', '.upload_file_action', function () {
-        let fileId = $(this).parent().attr('id')
-        if (fileId !== undefined) {
-            up.removeFile(up.getFile(fileId))
-        } else {
-           $(this).parent().remove()
-        }
+        // const fileId = $(this).parent().attr('id')
+        $(this).parent().remove()
+        // if (typeof fileId === 'undefined') {
+        //     $(this).parent().remove()
+        // } else {
+        //     up.removeFile(up.uid)
+        // }
         up.refresh()
     })
     $('#{$this->errorContainer}').hide()
@@ -232,10 +233,20 @@ JS_BIND;
 (function (up, err) {
     let errorElement = $('#' + up.settings.error_container)
     let errMsg = ''
-    if (JSON.parse(err.response).error !== undefined) {
-        errMsg = JSON.parse(err.response).error
+    console.log(err, err.response, (typeof err.response), (typeof err.response) == 'object')
+    if ((typeof err.response) == 'object') {
+        let error = err.response
+        console.log(error, typeof error, error.code, error.message)
+        errorElement.html('Error #:' + error.code + ' ' + error.message).show()
+    } else {
+         error= JSON.parse(err.response)
+         errMsg = error.error
+         errorElement.html('Error #:' + err.code + ' ' + err.message + errMsg).show()
     }
-    errorElement.html('Error #:' + err.code + ' ' + err.message + errMsg).show()
+    // if (error.error !== undefined) {
+    //     errMsg = error.error
+    // }
+    // errorElement.html('Error #:' + err.code + ' ' + err.message).show()
 })
 JS_BIND;
         return $js;
