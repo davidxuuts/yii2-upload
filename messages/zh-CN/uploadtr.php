@@ -24,4 +24,5 @@ return [
     'The image height must larger than {minHeight} pixels' => '图片高度最小应为{minHeight}像素',
     'The image width must larger than {minWidth} pixels' => '图片宽度最小应为{minWidth}像素',
     'The image size must larger than {minWidth}*{minHeight} pixels' => '图片最小应为{minWidth}x{minHeight}像素',
+    'The image size is too small, please check' => '图片太小，请检查',
 ];

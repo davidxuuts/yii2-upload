@@ -2,8 +2,6 @@
 let UploadItem = function () {
     return {
         tplUploadItem: function (uploader, file, prepareUploadText, removeFileText) {
-            // console.log(uploader)
-            console.log(file)
             let settings = uploader.settings;
             let path = file.url;
             let filesize = file.size;

@@ -13,9 +13,9 @@ class UploadAsset extends AssetBundle
     public $baseUrl = "@davidxu/upload/assets";
     
     public $js = [
+//        'moxie.min.js',
         'plupload.full.min.js',
 //        'plupload.dev.js',
-        'moxie.min.js',
         'i18n/zh_CN.js',
         'plupload.uploadItem.js',
         'js/sha1.min.js',
@@ -23,6 +23,7 @@ class UploadAsset extends AssetBundle
     ];
     
     public $css = [
+        'https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css',
         'css/upload.css',
     ];
     

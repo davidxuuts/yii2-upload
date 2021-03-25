@@ -21,6 +21,8 @@ class UploadEvents extends BaseObject
     public $videoDefaultUrl;
     public $audioDefaultUrl;
     public $fileDefaultUrl;
+    public $minHeight = 0;
+    public $minWidth = 0;
     
     private $appendHtmlType = 'html';
     
@@ -42,6 +44,7 @@ class UploadEvents extends BaseObject
      * Init
      */
     protected function bindInit() {
+        $message = Yii::t('uploadtr', 'The image size is too small, please check');
         $js = /** @lang JavaScript */ <<<JS_BIND
 function(up) {
     let params = up.getOption('multipart_params')
@@ -51,6 +54,49 @@ function(up) {
         if (uploaded_nums >= params.max_file_nums) {
             elementBrowse.hide();
         }
+    }
+
+    const minWidth = {$this->minWidth}
+    const minHeight = {$this->minHeight}
+    if (minHeight > 0 || minWidth > 0 ) {
+        plupload.addFileFilter('min_img_resolution', function (minImgSize, file, callback) {
+           const minWidth = minImgSize[0]
+           const minHeight = minImgSize[1]
+            let self = this
+            let img = new window.moxie.image.Image()
+            function finalize(result) {
+                img.destroy()
+                img = null
+                if (!result) {
+                    self.trigger('Error', {
+                        response: {
+                            error: true,
+                            code: plupload.IMAGE_DIMENSIONS_ERROR,
+                            message: '{$message}',
+                            file: file
+                        }
+                    })
+                }
+                callback(result)
+            }
+            img.onload = function() {
+                let result = true
+                if (minWidth > 0 && minHeight > 0) {
+                    result = img.width >= minWidth && img.height >= minHeight
+                } else if (minWidth > 0) {
+                    result = img.width >= minWidth
+                } else if (minHeight > 0) {
+                    result = img.height >= minHeight
+                } else {
+                    result = true
+                }
+                finalize(result)
+            }
+            img.onerror = function() {
+                finalize(false)
+            }
+            img.load(file.getSource())
+        })
     }
 }
 JS_BIND;
@@ -65,13 +111,7 @@ JS_BIND;
         $js = /** @lang JavaScript */ <<<JS_BIND
 function(up) {
     $(document).on('click', '.upload_file_action', function () {
-        // const fileId = $(this).parent().attr('id')
         $(this).parent().remove()
-        // if (typeof fileId === 'undefined') {
-        //     $(this).parent().remove()
-        // } else {
-        //     up.removeFile(up.uid)
-        // }
         up.refresh()
     })
     $('#{$this->errorContainer}').hide()
@@ -96,7 +136,6 @@ function (up, files) {
     let prepareUploadText = '{$prepareUploadText}'
     let removeFileText = '{$removeFileText}'
     plupload.each(files, function (file) {
-        console.log(file)
         let params = up.getOption('multipart_params')
         let key = '{$this->generateKey()}'
         let ext = file.name.substr(file.name.lastIndexOf('.'))
@@ -169,7 +208,6 @@ JS_BIND;
     
         $js = /** @lang JavaScript */ <<<JS_BIND
 function (up, file, res) {
-    console.log(res)
     if (typeof res !== 'undefined' && res.status === 200) {
         let response = JSON.parse(res.response)
         let url = response.path
@@ -186,10 +224,8 @@ function (up, file, res) {
         let responseElement = {$inputElement}
         let params = up.getOption('multipart_params')
         if (params['x:store_in_db'] === true || params['x:store_in_db'] === 'true') {
-            console.log('store_in_db', 'true')
             responseElement.val(response.id)
         } else {
-            console.log('store_in_db', 'false')
             responseElement.val(url)
         }
         elementFile.find('.upload_file_thumb img').attr('src', '{$fileBaseUrl}' + url)
@@ -233,20 +269,14 @@ JS_BIND;
 (function (up, err) {
     let errorElement = $('#' + up.settings.error_container)
     let errMsg = ''
-    console.log(err, err.response, (typeof err.response), (typeof err.response) == 'object')
     if ((typeof err.response) == 'object') {
         let error = err.response
-        console.log(error, typeof error, error.code, error.message)
         errorElement.html('Error #:' + error.code + ' ' + error.message).show()
     } else {
          error= JSON.parse(err.response)
          errMsg = error.error
          errorElement.html('Error #:' + err.code + ' ' + err.message + errMsg).show()
     }
-    // if (error.error !== undefined) {
-    //     errMsg = error.error
-    // }
-    // errorElement.html('Error #:' + err.code + ' ' + err.message).show()
 })
 JS_BIND;
         return $js;
