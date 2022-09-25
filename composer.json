@@ -1,8 +1,8 @@
 {
     "name": "davidxu/yii2-upload",
-    "description": "This is a Yii2 Qiniu Uploader with plupload",
+    "description": "A Yii2 Uploader with plupload",
     "type": "yii2-extension",
-    "keywords": ["yii2","extension"],
+    "keywords": ["yii2","extension", "upload", "plupload"],
     "license": "MIT",
     "authors": [
         {
@@ -13,12 +13,24 @@
     "require": {
         "php": ">=7.1",
         "yiisoft/yii2": "~2.0.0",
-        "jianyan74/yii2-easy-wechat": "*",
-        "qiniu/php-sdk": "*"
+        "npm-asset/cropperjs": "^1.5.12",
+        "npm-asset/plupload": "~2.3",
+        "davidxu/yii2-sweetalert2-widget": "^2.0.5",
+        "davidxu/yii2-base": "^1.0"
     },
+    "suggest": {
+        "php-ffmpeg/php-ffmpeg": "^1.0",
+        "npm-asset/qiniu-js": "^3.4.1"
+    },
+    "repositories":[
+        {
+            "type": "composer",
+            "url": "https://asset-packagist.org"
+        }
+    ],
     "autoload": {
         "psr-4": {
-            "davidxu\\upload\\": ""
+            "davidxu\\upload\\": "src/"
         }
     }
 }

@@ -1,3 +1,6 @@
+UNDER REDESIGN
+==========
+
 A Yii2 Upload
 =====================================
 This is a Yii2 upload widget with plupload, includes 'local' upload and 'qiniu' upload
