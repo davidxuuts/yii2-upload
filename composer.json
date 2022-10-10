@@ -14,7 +14,6 @@
         "php": ">=7.1",
         "yiisoft/yii2": "~2.0.0",
         "npm-asset/plupload": "~2.3",
-        "davidxu/yii2-sweetalert2-widget": "^2.0.5",
         "davidxu/yii2-base": "^1.0"
     },
     "suggest": {
