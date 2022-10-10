@@ -12,7 +12,7 @@ class UploadAsset extends AssetBundle
     ];
     
     public $css = [
-        'css/style.scss',
+        'css/style' . (YII_ENV_PROD ? '' : '.min') . '.css',
     ];
     
     public $depends = [

@@ -9,6 +9,10 @@ $text-color: #ffffff;
     .preview {
       background: $background-color;
       border-radius: .5rem;
+      width: 100%;
+      height: 100%;
+      font-size: 4rem;
+      text-align: center;
       transition: .5s -webkit-filter;
       &:hover {
         img {
@@ -68,6 +72,16 @@ $text-color: #ffffff;
       opacity: .75;
       border: $text-color solid 1px;
     }
+    .uploaded {
+      position: absolute;
+      text-align: center;
+      bottom: 2rem;
+      left: 4rem;
+      width: 2rem;
+      border-radius: 0.25rem;
+      opacity: .9;
+      border: $text-color solid 1px;
+    }
   }
   .fileinput-button {
     display: block;
@@ -110,4 +124,14 @@ $text-color: #ffffff;
   .img-container {
     min-height: 300px;
   }
+}
+
+.ribbon-wrapper-custom {
+  height: 70px;
+  overflow: hidden;
+  position: absolute;
+  right: 0.25rem;
+  top: 0.25rem;
+  width: 70px;
+  z-index: 10;
 }

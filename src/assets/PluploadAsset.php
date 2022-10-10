@@ -8,6 +8,7 @@ use yii\web\AssetBundle;
 class PluploadAsset extends AssetBundle
 {
     public $sourcePath = "@npm/plupload/js/";
+    public $sourceUrl = "@npm/plupload/js/";
 
     public $js = [
         'plupload.full.min.js',
