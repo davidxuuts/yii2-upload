@@ -26,7 +26,7 @@ class Upload extends InputWidget
     public $resizeOptions = [
         'quality' => 100,
     ];
-    public $crop = true;
+    public $crop = false;
     public $aspectRatio = 1 / 1;
     public $useFancyUI = true;
     public $filters = [];
@@ -85,7 +85,7 @@ class Upload extends InputWidget
             'multipart_params' => $this->metaData,
         ]);
         $this->_encodedClientOptions = Json::encode($this->clientOptions);
-        $this->_encodedMetaData = Json::encode($this->metaData);
+//        $this->_encodedMetaData = Json::encode($this->metaData);
         $this->_crop = $this->crop ? 'true' : 'false';
         $this->_useFancyUI = $this->useFancyUI ? 'true' : 'false';
         $this->registerAssets($this->_view);
@@ -217,7 +217,6 @@ $(function() {
             let image = new Image()  
             img.onload = function() {
                 img.server_id = file.id
-                console.log(img)
                 let previewTemplate = uploadFileTemplate(0, file)
                 $('#{$this->containerId}').append(previewTemplate)
                 $('#preview_' + file.id).html('<img src="' + img.getAsDataURL() + '" id="image-cropper">')
@@ -297,7 +296,6 @@ $(function() {
                         url: '{$this->getHashUrl}',
                         type: 'POST',
                         success: function (response) {
-                            console.log('hash response', response)
                             if (response.success) {
                                 up.trigger('FileUploaded', file, response)
                             } else {
