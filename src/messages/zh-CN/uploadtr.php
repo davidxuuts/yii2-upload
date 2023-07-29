@@ -1,4 +1,10 @@
 <?php
+/*
+ * Copyright (c) 2023.
+ * @author David Xu <david.xu.uts@163.com>
+ * All rights reserved.
+ */
+
 return [
     'Attribute name must contain word charactes only' => '属性名只能包含字符',
     'Upload files' => '上传文件',

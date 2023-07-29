@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2023.
+ * @author David Xu <david.xu.uts@163.com>
+ * All rights reserved.
+ */
+
 .upload_wrapper{
   margin-top: 10px;
   position: relative;
@@ -86,7 +92,7 @@
   white-space: nowrap;
   color: #fff;
   font-size: 100%;
-  font-family: Courier New;
+  font-family: Courier New, serif;
 }
 .upload_file .upload_file_size{
   display: inline-block;

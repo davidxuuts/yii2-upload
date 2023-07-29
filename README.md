@@ -17,6 +17,7 @@ For more Qiniu Kodo policy please refer to Qiniu website.
 
 We use custom function for video/image upload and insert.
 
+If cache set, you can get uploaded file information by `Yii::$app->cache->get($info['path'])` and invalidate this key by using `yii\caching\TagDependency::invalidate($cache, $info['path'] . $info['hash'])`
 
 Installation
 ------------
@@ -35,12 +36,12 @@ or add
 "davidxu/yii2-upload": "*"
 ```
 
-to the require section of your `composer.json` file.
+to the requirement section of your `composer.json` file.
 
 
 Usage
 -----
-If you want to store files information in DB (MySQL/MariaDB), please excute migration file by
+If you want to store files information in DB (MySQL/MariaDB), please execute migration file by
 ```
 yii migrate/up @davidxu/base/migrations
 ```
@@ -100,7 +101,7 @@ echo Upload::widget([
     'storeInDB' => true, // return file id in DB to image url instead of file url if true, migrate model db first. default false
     'metaData' => ['foo' => 'bar',],
     'crop' => true, // default false, if true, the 'maxFiles' will be forced to 1
-    'aspectRactio' => 16 / 9, // default 1 /1   
+    'aspectRatio' => 16 / 9, // default 1 /1   
     'chunkSize' => 4 * 1024 * 1024, // If `chunkSize` more than system size (`get_cfg_var('upload_max_filesize')`), system upload max filesize will be used
     'secondUpload' => true, // if true, `getHashUrl` should be set
     'getHashUrl' => Url::to('@web/upload/get-hash'),
@@ -161,7 +162,7 @@ class UploadController extends Controller
             'local' => [
                 'class' => LocalAction::class,
                 'url' => Yii::getAlias('@web/uploads'), // default: ''. stored file base url,
-                'fileDir' => Yii::getAlias('@webroot/uploads'), // default: '@webroot/uploads'. file store in this dirctory,
+                'fileDir' => Yii::getAlias('@webroot/uploads'), // default: '@webroot/uploads'. file store in this directory,
                 'allowAnony' => true, // default false
                 'attachmentModel' => Attachment::class,
             ],

@@ -1,5 +1,9 @@
 <?php
-
+/*
+ * Copyright (c) 2023.
+ * @author David Xu <david.xu.uts@163.com>
+ * All rights reserved.
+ */
 
 namespace davidxu\upload;
 
@@ -9,38 +13,37 @@ use davidxu\base\assets\QETagAsset;
 use davidxu\base\assets\QiniuJsAsset;
 use davidxu\base\helpers\StringHelper;
 use davidxu\base\widgets\InputWidget;
-use davidxu\upload\assets\PluploadAsset;
 use davidxu\upload\assets\UploadAsset;
-use yii\base\InvalidArgumentException;
+use yii\base\InvalidConfigException;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\helpers\Json;
 use Yii;
 use yii\i18n\PhpMessageSource;
+use yii\web\View;
 
 class Upload extends InputWidget
 {
-    /**
-     * @var string
-     */
-    public $resizeOptions = [
+    /** @var array|int[]  */
+    public array $resizeOptions = [
         'quality' => 100,
     ];
-    public $crop = false;
-    public $aspectRatio = 1 / 1;
-    public $useFancyUI = true;
-    public $filters = [];
+    /** @var bool */
+    public bool $crop = false;
+    public int|float $aspectRatio = 1;
+    public bool $useFancyUI = true;
+    public array $filters = [];
 
-    protected $containerId;
+    protected ?string $containerId = null;
 
-    private $_view;
-    private $_encodedClientOptions;
-    private $_previewTemplate;
-    private $_crop;
-    private $_useFancyUI;
+    protected View|string|null $_view = null;
+    private ?string $_encodedClientOptions = null;
+    private ?string $_crop = null;
+    private ?string $_useFancyUI = null;
 
     /**
      * @inheritDoc
+     * @throws InvalidConfigException
      */
     public function init()
     {
@@ -79,13 +82,12 @@ class Upload extends InputWidget
             'browse_button' => 'fileinput_' . $this->containerId,
             'multi_selection' => false,
             'max_retries' => 1,
-            'chunk_size' => (bool)$this->isLocalDrive() ? $this->chunkSize : 0,
+            'chunk_size' => $this->isLocalDrive() ? $this->chunkSize : 0,
             'flash_swf_url' => $this->registerAssets($this->_view)->baseUrl . '/Moxie.swf',
             'silverlight_xap_url' => $this->registerAssets($this->_view)->baseUrl . '/js/Moxie.xap',
             'multipart_params' => $this->metaData,
         ]);
         $this->_encodedClientOptions = Json::encode($this->clientOptions);
-//        $this->_encodedMetaData = Json::encode($this->metaData);
         $this->_crop = $this->crop ? 'true' : 'false';
         $this->_useFancyUI = $this->useFancyUI ? 'true' : 'false';
         $this->registerAssets($this->_view);
@@ -98,47 +100,57 @@ class Upload extends InputWidget
     {
         parent::run();
         $html = [];
-        $html[] = ($this->hasModel())
-            ? Html::activeHiddenInput($this->model, $this->attribute, $this->options)
-            : Html::hiddenInput($this->name, $this->value, $this->options);
+        $invalidFeedbackContainer = Html::tag('div', '', ['class' => 'invalid-feedback ']);
+//        $html[] = ($this->hasModel())
+//            ? Html::activeHiddenInput($this->model, $this->attribute, $this->options)
+//            : Html::hiddenInput($this->name, $this->value, $this->options);
         $inputButton = Html::tag('div', '<i class="fas fa-upload"></i>', [
             'class' => 'fileinput-button',
             'id' => 'fileinput_' . $this->containerId,
         ]);
         $html[] = Html::tag('div', $inputButton, ['class' => 'col text-center']);
+        $html[] = ($this->hasModel())
+            ? (Html::activeHiddenInput($this->model, $this->attribute, $this->options) . $invalidFeedbackContainer)
+            : (Html::hiddenInput($this->name, $this->value, $this->options) . $invalidFeedbackContainer);
         echo Html::tag('div', implode("\n", $html), [
             'class' => 'row upload-previews',
             'id' => $this->containerId,
         ]);
-        echo '<div class="modal fade" id="modalUp" aria-hidden="true" data-backdrop="static" style="display: none;" tabindex="-1">'
-            . '    <div class="modal-dialog">'
-            . '    <div class="modal-content">'
-            . '        <div class="modal-header">'
-            . '           <h4 class="modal-title">'. Yii::t('app', 'Basic information') . '</h4>'
-            . '            <button type="button" class="close" data-dismiss="modal" aria-label="Close">'
-            . '                <span aria-hidden="true">×</span>'
-            . '            </button>'
-            . '        </div>'
-            . '        <div class="modal-body">'
-            . '            <p>' . Yii::t('app', 'Loading ...') . '</p>'
-            . '        </div>'
-            . '        <div class="modal-footer">'
-            . '            <button type="button" class="btn btn-secondary" data-dismiss="modal">' . Yii::t('app', 'Close') . '</button>'
-            . '           ' . Html::tag('span', Yii::t('app', 'Save'), [
-                'type' => 'button',
-                'class' => 'btn btn-primary',
-                'id' => 'save-crop',
-                'data-option' => '{"width":160, "height": 160}',
-                'data-method' => 'getCroppedCanvas'
-            ])
-            . '        </div>'
-            . '    </div>'
-            . '</div>'
-            . '</div>';
+        if ($this->crop) {
+            echo '<div class="modal fade" id="modalUp" aria-hidden="true" data-backdrop="static" style="display: none;" tabindex="-1">'
+                . '    <div class="modal-dialog">'
+                . '    <div class="modal-content">'
+                . '        <div class="modal-header">'
+                . '           <h4 class="modal-title">' . Yii::t('app', 'Basic information') . '</h4>'
+                . '            <button type="button" class="close" data-dismiss="modal" aria-label="Close">'
+                . '                <span aria-hidden="true">×</span>'
+                . '            </button>'
+                . '        </div>'
+                . '        <div class="modal-body">'
+                . '            <p>' . Yii::t('app', 'Loading ...') . '</p>'
+                . '        </div>'
+                . '        <div class="modal-footer">'
+                . '            <button type="button" class="btn btn-secondary" data-dismiss="modal">' . Yii::t('app', 'Close') . '</button>'
+                . '           ' . Html::tag('span', Yii::t('app', 'Save'), [
+                    'type' => 'button',
+                    'class' => 'btn btn-primary',
+                    'id' => 'save-crop',
+                    'data-option' => '{"width":160, "height": 160}',
+                    'data-method' => 'getCroppedCanvas'
+                ])
+                . '        </div>'
+                . '    </div>'
+                . '</div>'
+                . '</div>';
+        }
         $this->registerScripts();
     }
 
-    protected function registerAssets($_view)
+    /**
+     * @param View|string $_view
+     * @return UploadAsset
+     */
+    protected function registerAssets(View|string $_view): UploadAsset
     {
         if ($this->crop) {
             JqueryCropperJsAsset::register($_view);
@@ -146,7 +158,7 @@ class Upload extends InputWidget
         if ($this->useFancyUI) {
             FancyUIAsset::register($_view);
         }
-        if ((bool)$this->isQiniuDrive()) {
+        if ($this->isQiniuDrive()) {
             QiniuJsAsset::register($_view);
         }
         if ($this->secondUpload) {
@@ -157,8 +169,7 @@ class Upload extends InputWidget
 
     protected function registerScripts()
     {
-        $js = /** @lang JavaScript */
-            <<< UPLOAD_JS
+        $js = /** @lang JavaScript */ <<<UPLOAD_JS
 function uploadFileTemplate(progress, file) {
     return '<div class="col">'
         + '    <div class="preview" id="preview_' + file.id +'">'
@@ -224,7 +235,7 @@ $(function() {
                 $('#uploaded_' + file.id).removeClass('d-none').addClass('d-done').html(getUploadedIcon(file.file_type, file))
                 up.refresh()
             }
-            img.load(file.file_type === 'images' ? file.path : file.poster)
+            img.load(file.file_type === 'image' ? file.path : file.poster)
             img.onembedded = function() {
                 img.destroy()
             }
@@ -325,6 +336,7 @@ $(function() {
                 $('#preview_' + file.id).html(getUploadedIcon(file.type))
                 up.refresh()
             }
+            handleUploadDrive(up, file, fileInfo)
         }
     })
     uploader_{$this->containerId}.bind('UploadProgress', function(up, file) {
@@ -349,9 +361,9 @@ $(function() {
                 type: 'POST',
                 success: function (response) {
                     if (response.success) {
+                        const result = response.data
                         let fileEl = $('#{$this->options["id"]}').val().split(',')
                             .filter(value => value !=="" && value !== null && value !== "0" && value !== 0)
-                        const result = response.response
                         if ({$this->_storeInDB}) {
                             if ({$this->maxFiles} <= 1) {
                                 $('#{$this->options["id"]}').val(result.id)
