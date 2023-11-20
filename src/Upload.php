@@ -31,7 +31,7 @@ class Upload extends InputWidget
     /** @var bool */
     public bool $crop = false;
     public int|float $aspectRatio = 1;
-    public bool $useFancyUI = true;
+    public bool $useFancyUI = false;
     public array $filters = [];
 
     protected ?string $containerId = null;
@@ -302,17 +302,31 @@ $(function() {
                 getHash(file.getNative()).then(hash => {
                     let multipart_params = up.getOption('multipart_params')
                     multipart_params.hash = hash
-                    $.ajax({
-                        data: multipart_params,
-                        url: '{$this->getHashUrl}',
-                        type: 'POST',
-                        success: function (response) {
-                            if (response.success) {
-                                up.trigger('FileUploaded', file, response)
-                            } else {
-                                handleUploadDrive(up, file, fileInfo)
+                    const uploaded = new Promise((resolve, reject) => {
+                        $.ajax({
+                            data: multipart_params,
+                            url: '{$this->getHashUrl}',
+                            type: 'POST',
+                            success: function (response) {
+                                fileInfo.hash = hash
+                                if (('success' in response) && (response.success === 'true' || response.success === true)) {
+                                    resolve(response)
+                                    // up.trigger('FileUploaded', file, response)
+                                } else {
+                                    console.log('will upload')
+                                    
+                                    console.log('file info with hash', fileInfo, hash)
+                                    reject()
+                                    // handleUploadDrive(up, file, fileInfo)
+                                }
                             }
-                        }
+                        })
+                    })
+                    uploaded.then((response) => {
+                        console.log( 'no need upload, thiere is a hash in database')
+                        up.trigger('FileUploaded', file, response)
+                    }).catch(() => {
+                        handleUploadDrive(up, file, fileInfo)
                     })
                 })
             }
@@ -350,6 +364,7 @@ $(function() {
         up.setOption('multipart_params', $.extend(multipartParams, params))
     })
     uploader_{$this->containerId}.bind('FileUploaded', function(up, file, response) {
+        console.log('FileUploaded', response)
         response = (typeof response) === 'string' ? JSON.parse(response) : response
         response = (typeof response.response) === 'string' ? JSON.parse(response.response) : response.response
         if (response.completed) {
@@ -425,13 +440,16 @@ $(function() {
         uploader_{$this->containerId}.refresh()
     })
     function handleUploadDrive(up, file, fileInfo) {
+        console.log('handle upload', fileInfo)
         if ({$this->isLocalDrive()}) {
             up.start()
         } else if ({$this->isQiniuDrive()}) {
+            console.log('fileInfo by handleUploadDrive', fileInfo)
             handleQiniuUpload(up, file, fileInfo)
         }
     }
     function handleQiniuUpload(up, file, fileInfo) {
+        console.log('qiniu upload', 'fileinfo', fileInfo)
         const config = {
             useCdnDomain: true,
             chunkSize: Math.floor({$this->chunkSize},  1024 * 1024)
@@ -441,12 +459,13 @@ $(function() {
         const putExtra = {
             fname: fileInfo.name,
             mimeType: fileInfo.mime_type,
-            customVars: customVars,
+            customVars: customVars
         }
         const observable = qiniu.upload(file.getNative(), fileInfo.key, '{$this->getQiniuToken()}', putExtra, config)
         const observer = {
             next(res) {
                 const percent = res.total.percent.toFixed(2)
+                console.log('upload percent', percent)
                 $('#progress_' + file.id).attr('aria-valuenow', percent)
                 $('#progress_' + file.id).find('.progress-bar').html(percent + '%')
             }, 
@@ -460,6 +479,7 @@ $(function() {
                 })
             }, 
             complete(res) {
+                console.log('qiniu uploaded', file, res)
                 up.trigger('FileUploaded', file, res)
             }
         }
